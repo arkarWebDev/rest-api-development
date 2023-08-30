@@ -3,6 +3,9 @@ const { validationResult } = require("express-validator");
 // models
 const Note = require("../models/note");
 
+// utils
+const { unlink } = require("../utils/unlink");
+
 exports.getNotes = (req, res, next) => {
   Note.find()
     .sort({ createdAt: -1 })
@@ -63,10 +66,13 @@ exports.getNote = (req, res, next) => {
 
 exports.deleteNote = (req, res, next) => {
   const { id } = req.params;
-  Note.findByIdAndRemove(id)
-    .then((_) => {
-      return res.status(204).json({
-        message: "Note deleted.",
+  Note.findById(id)
+    .then((note) => {
+      unlink(note.cover_image);
+      return Note.findByIdAndRemove(id).then((_) => {
+        return res.status(204).json({
+          message: "Note deleted.",
+        });
       });
     })
     .catch((err) => {
@@ -93,10 +99,16 @@ exports.getOldNote = (req, res, next) => {
 
 exports.updateNote = (req, res, next) => {
   const { note_id, title, content } = req.body;
+  const cover_image = req.file;
+
   Note.findById(note_id)
     .then((note) => {
       note.title = title;
       note.content = content;
+      if (cover_image) {
+        unlink(note.cover_image);
+        note.cover_image = cover_image.path;
+      }
       return note.save();
     })
     .then((_) => {
