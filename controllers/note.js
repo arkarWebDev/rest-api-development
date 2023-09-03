@@ -7,10 +7,25 @@ const Note = require("../models/note");
 const { unlink } = require("../utils/unlink");
 
 exports.getNotes = (req, res, next) => {
+  const currentPage = req.query.page || 1;
+  const perPage = 6;
+  let totalNotes;
+  let totalPages;
+
   Note.find()
-    .sort({ createdAt: -1 })
+    .countDocuments()
+    .then((counts) => {
+      totalNotes = counts;
+      // total note => 12
+      // 12 / 6 = 2
+      totalPages = Math.ceil(totalNotes / perPage);
+      return Note.find()
+        .sort({ createdAt: -1 })
+        .skip((currentPage - 1) * perPage)
+        .limit(perPage);
+    })
     .then((notes) => {
-      return res.status(200).json(notes);
+      return res.status(200).json({ notes, totalNotes, totalPages });
     })
     .catch((err) => {
       console.log(err);
