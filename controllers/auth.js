@@ -70,3 +70,23 @@ exports.login = async (req, res, next) => {
     return res.status(400).json({ message: err.message });
   }
 };
+
+exports.checkStatus = (req, res, next) => {
+  const authHeader = req.get("Authorization");
+  if (!authHeader) {
+    return res.status(401).json({ message: "Not authenticated." });
+  }
+
+  const token = authHeader.split(" ")[1];
+  try {
+    const tokenMatch = jwt.verify(token, process.env.JWT_KEY);
+    if (!tokenMatch) {
+      return res.status(401).json({ message: "Not authenticated." });
+    }
+    req.userId = tokenMatch.userId;
+    res.json("ok");
+    next();
+  } catch (err) {
+    return res.status(401).json({ message: "Not authenticated." });
+  }
+};

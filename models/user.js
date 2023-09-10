@@ -15,10 +15,6 @@ const userSchema = new Schema({
     type: String,
     require: true,
   },
-  notes: {
-    type: Schema.Types.ObjectId,
-    ref: "Note",
-  },
 });
 
 const userModel = model("User", userSchema);
